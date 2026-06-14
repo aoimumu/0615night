@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>静流</title>
+<title>萤火闪烁时</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -18,18 +18,24 @@ body{
 /* ===== 首页 ===== */
 .home{display:block}
 .home .hero{
-  text-align:center;padding:60px 24px 40px
+  text-align:center;padding:60px 24px 36px
 }
 .home .hero h1{
   font-family:'Noto Serif SC','Source Han Serif SC','STSong','Songti SC',serif;
-  font-size:32px;font-weight:400;color:#5a4330;letter-spacing:.12em;margin-bottom:6px
+  font-size:30px;font-weight:400;color:#5a4330;
+  letter-spacing:.1em;margin-bottom:8px
+}
+.home .hero .jp{
+  font-size:14px;color:#b0a090;letter-spacing:.06em;
+  font-family:'Noto Serif SC','Source Han Serif SC',serif;
+  margin-bottom:4px
 }
 .home .hero .sub{
-  font-size:14px;color:#a09080;letter-spacing:.06em;
+  font-size:13px;color:#a09080;letter-spacing:.06em;
   font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif
 }
 .home .hero .ornament{
-  color:#d4c8b8;margin:20px 0 8px;font-size:12px;letter-spacing:.2em
+  color:#d4c8b8;margin:18px 0 8px;font-size:11px;letter-spacing:.2em
 }
 
 .home .vol-grid{
@@ -93,10 +99,6 @@ body{
 }
 .content p{margin-bottom:.8em;text-indent:2em}
 
-.content hr.foot-divider{
-  border:none;border-top:1px solid #e0d6c8;margin:48px auto 32px;width:80px
-}
-
 .foot-nav{
   max-width:640px;margin:0 auto;padding:0 24px 20px;
   display:flex;justify-content:center;gap:28px;
@@ -110,8 +112,8 @@ body{
 .foot-nav a.muted{color:#d8cfc4;pointer-events:none}
 
 @media(max-width:600px){
-  .home .hero{padding:44px 20px 32px}
-  .home .hero h1{font-size:26px}
+  .home .hero{padding:44px 20px 28px}
+  .home .hero h1{font-size:24px}
   .content{font-size:16px;padding:28px 16px 60px}
   .content h1{font-size:1.35em}
   .topbar{padding:10px 14px}
@@ -123,9 +125,10 @@ body{
 
 <div class="home" id="home">
   <div class="hero">
-    <h1>静 流</h1>
+    <p class="jp">蛍の灯る頃に</p>
+    <h1>萤火闪烁时</h1>
     <p class="sub">全二十一卷</p>
-    <p class="ornament">&mdash; &middot; &mdash;</p>
+    <p class="ornament">&mdash; &sdot; &mdash;</p>
   </div>
   <div class="vol-grid" id="volGrid"></div>
 </div>
@@ -194,7 +197,7 @@ function openVol(idx) {
   home.style.display = 'none';
   reader.style.display = 'block';
   volTitle.textContent = VOLUMES[idx].title;
-  document.title = VOLUMES[idx].title + ' - 静流';
+  document.title = VOLUMES[idx].title + ' - 萤火闪烁时';
   window.scrollTo(0, 0);
   localStorage.setItem(STORAGE, JSON.stringify({i: idx, s: 0}));
 
@@ -224,7 +227,7 @@ function goHome() {
   cur = -1;
   home.style.display = 'block';
   reader.style.display = 'none';
-  document.title = '静流';
+  document.title = '萤火闪烁时';
   window.scrollTo(0, 0);
 }
 
