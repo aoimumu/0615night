@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>轻小说</title>
+<title>静流</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -21,8 +21,8 @@ body{
   text-align:center;padding:60px 24px 40px
 }
 .home .hero h1{
-  font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
-  font-size:28px;font-weight:600;color:#5a4330;letter-spacing:.08em;margin-bottom:6px
+  font-family:'Noto Serif SC','Source Han Serif SC','STSong','Songti SC',serif;
+  font-size:32px;font-weight:400;color:#5a4330;letter-spacing:.12em;margin-bottom:6px
 }
 .home .hero .sub{
   font-size:14px;color:#a09080;letter-spacing:.06em;
@@ -111,7 +111,7 @@ body{
 
 @media(max-width:600px){
   .home .hero{padding:44px 20px 32px}
-  .home .hero h1{font-size:24px}
+  .home .hero h1{font-size:26px}
   .content{font-size:16px;padding:28px 16px 60px}
   .content h1{font-size:1.35em}
   .topbar{padding:10px 14px}
@@ -121,17 +121,15 @@ body{
 </head>
 <body>
 
-<!-- ===== 首页 ===== -->
 <div class="home" id="home">
   <div class="hero">
-    <h1>轻小说</h1>
+    <h1>静 流</h1>
     <p class="sub">全二十一卷</p>
     <p class="ornament">&mdash; &middot; &mdash;</p>
   </div>
   <div class="vol-grid" id="volGrid"></div>
 </div>
 
-<!-- ===== 阅读页 ===== -->
 <div class="reader" id="reader">
   <div class="topbar">
     <a class="home-link" id="homeLink">&larr; 目录</a>
@@ -182,7 +180,6 @@ var volTitle = document.getElementById('volTitle');
 var content = document.getElementById('content');
 var cur = -1;
 
-// 构建首页卷目列表
 VOLUMES.forEach(function(v, i) {
   var a = document.createElement('a');
   a.href = '#';
@@ -197,11 +194,10 @@ function openVol(idx) {
   home.style.display = 'none';
   reader.style.display = 'block';
   volTitle.textContent = VOLUMES[idx].title;
-  document.title = VOLUMES[idx].title;
+  document.title = VOLUMES[idx].title + ' - 静流';
   window.scrollTo(0, 0);
   localStorage.setItem(STORAGE, JSON.stringify({i: idx, s: 0}));
 
-  // 顶栏箭头
   var pt = document.getElementById('prevTop');
   var nt = document.getElementById('nextTop');
   pt.classList.toggle('muted', idx <= 0);
@@ -209,10 +205,8 @@ function openVol(idx) {
   pt.onclick = idx > 0 ? function(){openVol(idx-1)} : null;
   nt.onclick = idx < VOLUMES.length-1 ? function(){openVol(idx+1)} : null;
 
-  // 渲染正文
   content.innerHTML = marked.parse(VOLUMES[idx].content);
 
-  // 底部导航
   var pf = document.getElementById('prevFoot');
   var nf = document.getElementById('nextFoot');
   pf.textContent = idx > 0 ? '← 上一卷' : '';
@@ -222,7 +216,6 @@ function openVol(idx) {
   nf.classList.toggle('muted', idx >= VOLUMES.length - 1);
   nf.onclick = idx < VOLUMES.length-1 ? function(e){e.preventDefault();openVol(idx+1)} : null;
 
-  // 恢复滚动
   var s = JSON.parse(localStorage.getItem(STORAGE) || '{}');
   if (s.i === idx && s.s > 0) requestAnimationFrame(function(){window.scrollTo(0, s.s)});
 }
@@ -231,14 +224,13 @@ function goHome() {
   cur = -1;
   home.style.display = 'block';
   reader.style.display = 'none';
-  document.title = '轻小说';
+  document.title = '静流';
   window.scrollTo(0, 0);
 }
 
 document.getElementById('homeLink').addEventListener('click', function(e) { e.preventDefault(); goHome(); });
 document.getElementById('homeFoot').addEventListener('click', function(e) { e.preventDefault(); goHome(); });
 
-// 键盘
 document.addEventListener('keydown', function(e) {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (cur >= 0) {
@@ -248,7 +240,6 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// 保存滚动
 var t;
 window.addEventListener('scroll', function() {
   clearTimeout(t);
@@ -257,7 +248,6 @@ window.addEventListener('scroll', function() {
   }, 300);
 });
 
-// 恢复上次阅读
 var s = JSON.parse(localStorage.getItem(STORAGE) || '{}');
 if (s.i != null && s.i >= 0 && s.i < VOLUMES.length) openVol(s.i);
 </script>
