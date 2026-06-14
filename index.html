@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轻小说阅读</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f0e8;
+  --surface: #ede6d8;
+  --text: #3d3226;
+  --text-secondary: #6b5e52;
+  --border: #d4c8b8;
+  --accent: #8b5e3c;
+  --accent-hover: #6b3f22;
+  --active-bg: #e0d5c0;
+  --shadow: rgba(61,50,38,0.08);
+  --font-serif: Georgia, 'Noto Serif SC', 'Source Han Serif SC', 'STSong', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --surface: #242424;
+  --text: #d4c8b8;
+  --text-secondary: #9b8e82;
+  --border: #3a3a3a;
+  --accent: #c4946c;
+  --accent-hover: #dbb894;
+  --active-bg: #2e2e2e;
+  --shadow: rgba(0,0,0,0.3);
+}
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-serif);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  transition: background 0.3s, color 0.3s;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.3s, background 0.3s;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-header h1 {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.sidebar-header .subtitle {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.vol-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.vol-list::-webkit-scrollbar { width: 4px; }
+.vol-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.vol-item {
+  display: block;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text);
+  text-decoration: none;
+  line-height: 1.5;
+}
+
+.vol-item:hover { background: var(--active-bg); }
+.vol-item.active {
+  background: var(--active-bg);
+  border-left-color: var(--accent);
+  font-weight: 600;
+}
+
+.vol-item .vol-num {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: block;
+}
+
+.sidebar-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  width: 32px; height: 32px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-sans);
+}
+.icon-btn:hover { background: var(--active-bg); border-color: var(--accent); }
+.icon-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.font-size-group { display: flex; gap: 4px; margin-left: auto; }
+.font-size-group .icon-btn { font-size: 12px; font-weight: 700; }
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  height: 48px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  font-family: var(--font-sans);
+  background: var(--bg);
+}
+
+.menu-btn {
+  display: none;
+  width: 32px; height: 32px;
+  border: none;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.topbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reading-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 20px 80px;
+}
+
+.reading-area::-webkit-scrollbar { width: 6px; }
+.reading-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.content-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  transition: font-size 0.2s;
+}
+
+.content-wrap[data-font="small"] { font-size: 15px; }
+.content-wrap[data-font="medium"] { font-size: 18px; }
+.content-wrap[data-font="large"] { font-size: 21px; }
+
+/* Markdown rendered styles */
+.content-wrap h1 {
+  font-family: var(--font-sans);
+  font-size: 1.8em;
+  font-weight: 700;
+  margin-bottom: 0.8em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid var(--border);
+  color: var(--accent);
+  text-align: center;
+}
+
+.content-wrap h2 {
+  font-family: var(--font-sans);
+  font-size: 1.3em;
+  font-weight: 600;
+  margin: 1.8em 0 0.8em;
+  color: var(--text);
+}
+
+.content-wrap p {
+  line-height: 1.9;
+  margin-bottom: 1em;
+  text-indent: 2em;
+  letter-spacing: 0.02em;
+}
+
+.content-wrap p:first-of-type { text-indent: 0; }
+
+.nav-bottom {
+  max-width: 680px;
+  margin: 60px auto 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-sans);
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+  text-align: center;
+  font-family: var(--font-sans);
+}
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Welcome */
+.welcome {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+}
+.welcome h2 { font-size: 24px; color: var(--accent); margin-bottom: 12px; }
+.welcome p { font-size: 14px; margin-bottom: 6px; }
+
+/* Loading */
+.loading { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Overlay for mobile */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 99;
+}
+.overlay.visible { display: block; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    transform: translateX(-100%);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .menu-btn { display: flex; align-items: center; justify-content: center; }
+  .reading-area { padding: 24px 16px 60px; }
+  .content-wrap h1 { font-size: 1.4em; }
+  .nav-bottom { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>📖 轻小说</h1>
+    <div class="subtitle">全21卷</div>
+  </div>
+  <nav class="vol-list" id="volList"></nav>
+  <div class="sidebar-footer">
+    <button class="icon-btn" id="themeBtn" title="切换深色/浅色模式" aria-label="切换主题">🌓</button>
+    <div class="font-size-group">
+      <button class="icon-btn" data-font="small" title="小号字体">小</button>
+      <button class="icon-btn active" data-font="medium" title="中号字体">中</button>
+      <button class="icon-btn" data-font="large" title="大号字体">大</button>
+    </div>
+  </div>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+
+<main class="main">
+  <div class="topbar">
+    <button class="menu-btn" id="menuBtn" aria-label="菜单">☰</button>
+    <span class="topbar-title" id="topbarTitle">选择一卷开始阅读</span>
+  </div>
+  <div class="reading-area" id="readingArea">
+    <div class="welcome">
+      <h2>欢迎阅读</h2>
+      <p>从左侧选择一卷开始你的阅读之旅</p>
+      <p style="margin-top:12px;font-size:12px;">💡 可以使用键盘 ← → 切换上下卷</p>
+    </div>
+  </div>
+</main>
+
+<script>
+const VOLUMES = [
+  { file: '第一卷_静流咖啡店.md', title: '第一卷 静流咖啡店' },
+  { file: '第二卷_文学部的午后.md', title: '第二卷 文学部的午后' },
+  { file: '第三卷_青梅与闯入者.md', title: '第三卷 青梅与闯入者' },
+  { file: '第四卷_浅草寺的签.md', title: '第四卷 浅草寺的签' },
+  { file: '第五卷_雨天的便利店.md', title: '第五卷 雨天的便利店' },
+  { file: '第六卷_隅田川花火大会.md', title: '第六卷 隅田川花火大会' },
+  { file: '第七卷_她的秘密.md', title: '第七卷 她的秘密' },
+  { file: '第八卷_台场的摩天轮.md', title: '第八卷 台场的摩天轮' },
+  { file: '第九卷_秋叶原的午后.md', title: '第九卷 秋叶原的午后' },
+  { file: '第十卷_代代木公园的落叶.md', title: '第十卷 代代木公园的落叶' },
+  { file: '第十一卷_下北泽的演出.md', title: '第十一卷 下北泽的演出' },
+  { file: '第十二卷_富士山的雪.md', title: '第十二卷 富士山的雪' },
+  { file: '第十三卷_病房与告白未遂.md', title: '第十三卷 病房与告白未遂' },
+  { file: '第十四卷_涩谷的十字路口.md', title: '第十四卷 涩谷的十字路口' },
+  { file: '第十五卷_她的相册.md', title: '第十五卷 她的相册' },
+  { file: '第十六卷_迪士尼的魔法.md', title: '第十六卷 迪士尼的魔法' },
+  { file: '第十七卷_料理教室.md', title: '第十七卷 料理教室' },
+  { file: '第十八卷_书与信.md', title: '第十八卷 书与信' },
+  { file: '第十九卷_抉择前夜.md', title: '第十九卷 抉择前夜' },
+  { file: '第二十卷_朝日之来ない朝.md', title: '第二十卷 朝日之来ない朝' },
+  { file: '第二十一卷_瞬く蛍火.md', title: '第二十一卷 瞬く蛍火' }
+];
+
+const STORAGE_KEY = 'novel_reader_state';
+const readingArea = document.getElementById('readingArea');
+const volList = document.getElementById('volList');
+const topbarTitle = document.getElementById('topbarTitle');
+const overlay = document.getElementById('overlay');
+const sidebar = document.getElementById('sidebar');
+const menuBtn = document.getElementById('menuBtn');
+const themeBtn = document.getElementById('themeBtn');
+
+let currentIdx = -1;
+let contentWrap = null;
+
+// State persistence
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { volIdx: -1, scrollTop: 0, theme: 'light', fontSize: 'medium' };
+}
+
+function saveState(s) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(e) {}
+}
+
+let state = loadState();
+
+// Apply theme
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  state.theme = theme;
+  saveState(state);
+}
+
+applyTheme(state.theme);
+themeBtn.addEventListener('click', () => {
+  applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+});
+
+// Apply font size
+function applyFontSize(size) {
+  document.querySelectorAll('.font-size-group .icon-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.font === size);
+  });
+  if (contentWrap) contentWrap.dataset.font = size;
+  state.fontSize = size;
+  saveState(state);
+}
+
+document.querySelectorAll('.font-size-group .icon-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyFontSize(btn.dataset.font));
+});
+
+// Build sidebar
+VOLUMES.forEach((vol, idx) => {
+  const el = document.createElement('a');
+  el.className = 'vol-item';
+  el.innerHTML = `<span class="vol-num">第${idx + 1}卷</span>${vol.title.replace(/^第.+卷\s*/, '')}`;
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    loadVolume(idx);
+    closeSidebar();
+  });
+  volList.appendChild(el);
+});
+
+function updateSidebarActive(idx) {
+  document.querySelectorAll('.vol-item').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+}
+
+function closeSidebar() {
+  sidebar.classList.remove('open');
+  overlay.classList.remove('visible');
+}
+
+menuBtn.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('visible');
+});
+overlay.addEventListener('click', closeSidebar);
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowLeft' && currentIdx > 0) loadVolume(currentIdx - 1);
+  if (e.key === 'ArrowRight' && currentIdx < VOLUMES.length - 1) loadVolume(currentIdx + 1);
+});
+
+// Load volume
+async function loadVolume(idx) {
+  if (idx < 0 || idx >= VOLUMES.length) return;
+  currentIdx = idx;
+  state.volIdx = idx;
+  saveState(state);
+
+  updateSidebarActive(idx);
+  topbarTitle.textContent = VOLUMES[idx].title;
+  readingArea.innerHTML = '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
+
+  try {
+    const resp = await fetch(VOLUMES[idx].file);
+    if (!resp.ok) throw new Error('文件加载失败');
+    const md = await resp.text();
+
+    // Remove the H1 title since we already display it in topbar, but keep for reading context
+    const html = marked.parse(md);
+
+    readingArea.innerHTML = '';
+    contentWrap = document.createElement('div');
+    contentWrap.className = 'content-wrap';
+    contentWrap.dataset.font = state.fontSize;
+    contentWrap.innerHTML = html;
+
+    readingArea.appendChild(contentWrap);
+
+    // Bottom nav
+    const nav = document.createElement('div');
+    nav.className = 'nav-bottom';
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'nav-btn';
+    prevBtn.textContent = idx > 0 ? '← ' + VOLUMES[idx - 1].title : '已经是第一卷了';
+    prevBtn.disabled = idx === 0;
+    prevBtn.addEventListener('click', () => { if (idx > 0) loadVolume(idx - 1); });
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'nav-btn';
+    nextBtn.textContent = idx < VOLUMES.length - 1 ? VOLUMES[idx + 1].title + ' →' : '已经是最后一卷了';
+    nextBtn.disabled = idx >= VOLUMES.length - 1;
+    nextBtn.addEventListener('click', () => { if (idx < VOLUMES.length - 1) loadVolume(idx + 1); });
+
+    nav.appendChild(prevBtn);
+    nav.appendChild(nextBtn);
+    readingArea.appendChild(nav);
+
+    // Restore scroll
+    if (state.scrollTop > 0) {
+      requestAnimationFrame(() => { readingArea.scrollTop = state.scrollTop; });
+    }
+  } catch(err) {
+    readingArea.innerHTML = `<div class="welcome"><h2>加载失败</h2><p>${err.message}</p></div>`;
+  }
+}
+
+// Save scroll position on scroll
+let scrollTimer;
+readingArea.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => {
+    state.scrollTop = readingArea.scrollTop;
+    saveState(state);
+  }, 250);
+});
+
+// Restore last reading position on load
+if (state.volIdx >= 0 && state.volIdx < VOLUMES.length) {
+  loadVolume(state.volIdx);
+  // Update sidebar active immediately
+  updateSidebarActive(state.volIdx);
+  topbarTitle.textContent = VOLUMES[state.volIdx].title;
+}
+
+// Apply saved font size
+applyFontSize(state.fontSize);
+
+// Handle window resize to close sidebar on desktop
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) closeSidebar();
+});
+</script>
+</body>
+</html>
